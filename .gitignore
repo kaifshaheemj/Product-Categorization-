@@ -1,0 +1,11 @@
+*.json
+pepagoraDb details/
+Phase2-Product Search/pepagoraDb details/*.json
+*.csv
+dataset/
+data/
+elasticsearch-*/
+*.zip
+*.tar.gz
+__pycache__/
+*.pyc

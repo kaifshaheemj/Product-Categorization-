@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pepagora | Product Search</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Base Reset ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:    #ef4444; /* Vivid Red */
+      --primary-d:  #b91c1c; /* Deep Red */
+      --accent:     #dc2626;
+      --bg:         #ffffff; /* Clean White */
+      --bg-alt:     #f8fafc; /* Subtle Gray */
+      --surface:    #ffffff;
+      --surface2:   #f1f5f9;
+      --border:     #e2e8f0;
+      --text:       #0f172a; /* Slate 900 */
+      --text-muted: #64748b; /* Slate 500 */
+      --mark:       #fee2e2; /* Light Red Highlight */
+      --mark-text:  #991b1b;
+      --radius:     16px;
+      --radius-sm:  8px;
+      --shadow:     0 12px 40px rgba(0,0,0,0.08);
+      --shadow-lg:  0 25px 60px rgba(239,68,68,0.12);
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-alt);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Hero Header: Vivid Red ──────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%);
+      padding: 64px 24px 100px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0; right: 0;
+      height: 60px;
+      background: var(--bg-alt);
+      clip-path: ellipse(55% 100% at 50% 100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .hero-logo {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 6vw, 52px);
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .hero p {
+      color: rgba(255,255,255,0.9);
+      font-size: 18px;
+      margin-bottom: 40px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── Search Box ──────────────────────────────────────────────── */
+    .search-wrapper {
+      max-width: 780px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1000;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 50px;
+      padding: 8px 8px 8px 28px;
+      box-shadow: var(--shadow-lg);
+      gap: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: transform 0.2s;
+    }
+    .search-box:focus-within {
+      transform: scale(1.01);
+    }
+    #searchInput {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 18px;
+      font-family: inherit;
+      color: var(--text);
+      background: transparent;
+    }
+    #searchInput::placeholder { color: #94a3b8; }
+    
+    .search-btn {
+      background: var(--text); /* Black/Dark blue for contrast */
+      border: none;
+      border-radius: 44px;
+      padding: 14px 32px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .search-btn:hover { background: #000; transform: translateX(2px); }
+    .search-btn:active { transform: scale(.97); }
+
+    .clear-btn {
+      background: #f1f5f9;
+      border: none;
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 14px;
+      display: none;
+      align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .clear-btn:hover { background: #e2e8f0; color: #1e293b; }
+
+    /* ── Autocomplete Dropdown ───────────────────────────────────── */
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 12px);
+      left: 0; right: 0;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+      max-height: 480px;
+      overflow-y: auto;
+      display: none;
+      z-index: 2000;
+      border: 1px solid var(--border);
+      animation: dropIn .2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .dropdown.visible { display: block; }
+
+    .dropdown-header {
+      padding: 14px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-muted);
+      background: var(--bg-alt);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 20px;
+      cursor: pointer;
+      transition: all .15s;
+      border-bottom: 1px solid var(--bg-alt);
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover,
+    .suggestion-item.active {
+      background: #fff1f2; /* Light red */
+    }
+    .suggestion-icon {
+      width: 40px; height: 40px;
+      background: #f8fafc;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+      border: 1px solid var(--border);
+    }
+    .suggestion-info { overflow: hidden; }
+    .suggestion-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .suggestion-name mark {
+      background: var(--mark);
+      color: var(--mark-text);
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 0 2px;
+    }
+    .suggestion-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .suggestion-chip {
+      background: var(--bg-alt);
+      color: var(--text-muted);
+      border-radius: 4px;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      font-weight: 500;
+    }
+
+    .dropdown-footer {
+      padding: 14px 20px;
+      background: #fff1f2;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    /* ── Results UI Refresh ──────────────────────────────────────── */
+    .main { 
+      max-width: 1240px; 
+      margin: 0 auto; 
+      padding: 40px 24px; 
+      position: relative;
+      z-index: 1; /* Keep below dropdown */
+    }
+
+    .stats-bar {
+      background: #fff;
+      padding: 12px 24px;
+      border-radius: 50px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border: 1px solid var(--border);
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .stats-text { font-size: 14px; color: var(--text-muted); flex: 1; }
+    .stats-text span { color: var(--text); font-weight: 600; }
+    .latency-badge {
+      font-size: 12px;
+      background: #fef2f2;
+      color: var(--primary);
+      border: 1px solid #fee2e2;
+      border-radius: 50px;
+      padding: 4px 12px;
+      font-weight: 500;
+    }
+
+    .results-layout {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 32px;
+      align-items: flex-start;
+      margin-top: 24px;
+    }
+    @media (max-width: 900px) { 
+      .results-layout { grid-template-columns: 1fr; } 
+    }
+
+    .sidebar {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+      box-shadow: var(--shadow);
+    }
+    .sidebar h3 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .cat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: all .15s;
+      margin-bottom: 2px;
+    }
+    .cat-item:hover { background: var(--surface2); color: var(--text); }
+    .cat-item.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .cat-count {
+      font-size: 11px;
+      background: rgba(0,0,0,0.05);
+      border-radius: 50px;
+      padding: 2px 8px;
+    }
+
+    .results-grid { display: grid; gap: 16px; }
+
+    .result-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: all .2s;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .result-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(239,68,68,0.08);
+    }
+    .result-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .result-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .result-name mark {
+      background: var(--mark);
+      color: var(--mark-text);
+      border-radius: 4px;
+      padding: 0 2px;
+    }
+    .score-badge {
+      font-size: 11px;
+      background: #f8fafc;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .result-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .result-desc mark {
+      background: rgba(239,68,68,0.1);
+      color: var(--primary);
+      border-radius: 2px;
+    }
+    .result-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill {
+      font-size: 11px;
+      border-radius: 50px;
+      padding: 3px 10px;
+      font-weight: 600;
+    }
+    .pill-cat { background: #fef2f2; color: var(--primary); }
+    .pill-sub { background: #f1f5f9; color: #64748b; }
+    .pill-type { background: rgba(34,197,94,0.1); color: #166534; }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+    .page-btn {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .page-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .state-msg {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+    .state-msg .icon { font-size: 64px; margin-bottom: 24px; opacity: 0.5; }
+
+    /* ── Trending Refreshed ──────────────────────────────────────── */
+    .trending {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 32px;
+    }
+    .trend-chip {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50px;
+      padding: 10px 20px;
+      font-size: 14px;
+      color: #fff;
+      cursor: pointer;
+      transition: all .2s;
+      backdrop-filter: blur(8px);
+      font-weight: 500;
+    }
+    .trend-chip:hover {
+      background: #fff;
+      color: var(--primary);
+      border-color: #fff;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Hero Header ─────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-logo">Pepagora</div>
+  <h1>Find Any Product Instantly</h1>
+  <p>Marketplace for 100,000+ industrial, food, and consumer goods</p>
+
+  <div class="search-wrapper">
+    <div class="search-box">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="What product are you looking for?"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="clear-btn" id="clearBtn" title="Clear">&#x2715;</button>
+      <button class="search-btn" id="searchBtn">
+        Search
+      </button>
+    </div>
+
+    <!-- Autocomplete Dropdown -->
+    <div class="dropdown" id="dropdown">
+      <div class="dropdown-header">Found in Categories</div>
+      <div id="suggestionsList"></div>
+      <div class="dropdown-footer" id="dropdownFooter">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <span id="footerText">View All Results</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trending chips -->
+  <div class="trending" id="trendingChips">
+    <span class="trend-chip" onclick="triggerSearch('basmati rice')">Basmati Rice</span>
+    <span class="trend-chip" onclick="triggerSearch('polycarbonate roofing')">Polycarbonate Roofing</span>
+    <span class="trend-chip" onclick="triggerSearch('industrial capacitor')">Industrial Capacitor</span>
+    <span class="trend-chip" onclick="triggerSearch('wheelchair')">Wheelchair</span>
+    <span class="trend-chip" onclick="triggerSearch('welding machine')">Welding Machine</span>
+  </div>
+</div>
+
+<!-- ── Main Results Area ────────────────────────────────────────────── -->
+<div class="main">
+  <div id="statsBar" class="stats-bar" style="display:none;">
+    <div class="stats-text" id="statsText"></div>
+    <div class="latency-badge" id="latencyBadge"></div>
+    <button onclick="clearSearch()" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;">Clear</button>
+  </div>
+
+  <div id="resultsLayout" class="results-layout" style="display:none;">
+    <aside class="sidebar">
+      <h3>Categories</h3>
+      <div id="categoryList"></div>
+    </aside>
+    <div>
+      <div class="results-grid" id="resultsGrid"></div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Initial / empty state -->
+  <div id="initialState" class="state-msg">
+    <div class="icon">&#x1F50D;</div>
+    <h2>Start Searching</h2>
+    <p>Type a product name, category, or keyword above to find relevant products from our catalogue.</p>
+  </div>
+</div>
+
+<script>
+  const API = 'http://127.0.0.1:8000';
+
+  let debounceTimer = null;
+  let currentQuery  = '';
+  let currentPage   = 1;
+  let currentCat    = null;
+  let activeIndex   = -1;
+
+  const input       = document.getElementById('searchInput');
+  const dropdown    = document.getElementById('dropdown');
+  const suggList    = document.getElementById('suggestionsList');
+  const footer      = document.getElementById('dropdownFooter');
+  const footerText  = document.getElementById('footerText');
+  const clearBtn    = document.getElementById('clearBtn');
+
+  // ── Input handler (debounced 220ms) ────────────────────────────────
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    clearBtn.style.display = q ? 'block' : 'none';
+    activeIndex = -1;
+
+    clearTimeout(debounceTimer);
+    if (q.length < 2) { hideDropdown(); return; }
+    debounceTimer = setTimeout(() => fetchAutocomplete(q), 220);
+  });
+
+  // ── Keyboard navigation ─────────────────────────────────────────────
+  input.addEventListener('keydown', (e) => {
+    const items = document.querySelectorAll('.suggestion-item');
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+      highlightItem(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, -1);
+      highlightItem(items);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && items[activeIndex]) {
+        const name = items[activeIndex].dataset.name;
+        input.value = name;
+        hideDropdown();
+        doSearch(name, 1);
+      } else {
+        doSearch(input.value.trim(), 1);
+      }
+    } else if (e.key === 'Escape') {
+      hideDropdown();
+    }
+  });
+
+  function highlightItem(items) {
+    items.forEach((el, i) => {
+      el.classList.toggle('active', i === activeIndex);
+      if (i === activeIndex) input.value = el.dataset.name;
+    });
+  }
+
+  // ── Click outside closes dropdown ───────────────────────────────────
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-wrapper')) hideDropdown();
+  });
+
+  // ── Clear button ────────────────────────────────────────────────────
+  clearBtn.addEventListener('click', clearSearch);
+  function clearSearch() {
+    input.value = '';
+    clearBtn.style.display = 'none';
+    hideDropdown();
+    showInitialState();
+  }
+
+  // ── Search button ───────────────────────────────────────────────────
+  document.getElementById('searchBtn').addEventListener('click', () => {
+    doSearch(input.value.trim(), 1);
+  });
+
+  // ── Trending chip trigger ───────────────────────────────────────────
+  function triggerSearch(q) {
+    input.value = q;
+    clearBtn.style.display = 'block';
+    hideDropdown();
+    doSearch(q, 1);
+  }
+
+  // ── Dropdown footer ─────────────────────────────────────────────────
+  footer.addEventListener('click', () => {
+    doSearch(input.value.trim(), 1);
+    hideDropdown();
+  });
+
+  // ── Fetch autocomplete suggestions ──────────────────────────────────
+  async function fetchAutocomplete(q) {
+    suggList.innerHTML = '<div class="dropdown-loading"><span class="spinner"></span>Searching…</div>';
+    dropdown.classList.add('visible');
+
+    try {
+      const res  = await fetch(`${API}/autocomplete?q=${encodeURIComponent(q)}&size=6`);
+      const data = await res.json();
+
+      if (!data.suggestions || data.suggestions.length === 0) {
+        suggList.innerHTML = '<div class="dropdown-loading">No suggestions found</div>';
+        footerText.textContent = `Search for "${q}"`;
+        return;
+      }
+
+      suggList.innerHTML = data.suggestions.map((s, i) => `
+        <div class="suggestion-item" data-name="${escapeAttr(s.productName)}" onclick="selectSuggestion('${escapeAttr(s.productName)}')">
+          <div class="suggestion-icon">${getCategoryIcon(s.category)}</div>
+          <div class="suggestion-info">
+            <div class="suggestion-name">${s.nameHighlight || s.productName}</div>
+            <div class="suggestion-meta">
+              ${s.category ? `<span class="suggestion-chip">${s.category}</span>` : ''}
+              ${s.subType && s.subType !== s.category ? ` &nbsp;${s.subType}` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      footerText.textContent = `See all results for "${q}"`;
+    } catch (err) {
+      suggList.innerHTML = '<div class="dropdown-loading">Could not reach API</div>';
+    }
+  }
+
+  function selectSuggestion(name) {
+    input.value = name;
+    hideDropdown();
+    doSearch(name, 1);
+  }
+
+  // ── Full Search ──────────────────────────────────────────────────────
+  async function doSearch(q, page, cat) {
+    if (!q) return;
+    currentQuery = q;
+    currentPage  = page;
+    currentCat   = cat || null;
+    hideDropdown();
+
+    document.getElementById('initialState').style.display = 'none';
+    document.getElementById('resultsLayout').style.display = 'none';
+    document.getElementById('statsBar').style.display      = 'none';
+    document.getElementById('resultsGrid').innerHTML = '<div class="state-msg"><div class="spinner" style="width:32px;height:32px;border-width:3px;"></div></div>';
+    document.getElementById('resultsLayout').style.display = 'grid';
+
+    const catParam = cat ? `&category=${encodeURIComponent(cat)}` : '';
+    try {
+      const res  = await fetch(`${API}/search?q=${encodeURIComponent(q)}&page=${page}&size=20${catParam}`);
+      const data = await res.json();
+      renderResults(data, q);
+    } catch (err) {
+      document.getElementById('resultsGrid').innerHTML =
+        '<div class="state-msg"><div class="icon">⚠️</div><h2>API Error</h2><p>Make sure autocomplete_api.py is running on port 8000.</p></div>';
+    }
+  }
+
+  // ── Render results ───────────────────────────────────────────────────
+  function renderResults(data, q) {
+    // Stats bar
+    const statsBar = document.getElementById('statsBar');
+    statsBar.style.display = 'flex';
+    document.getElementById('statsText').innerHTML =
+      `Found <span>${data.total.toLocaleString()}</span> results for <span>"${q}"</span>` +
+      (currentCat ? ` in <span>${currentCat}</span>` : '');
+    document.getElementById('latencyBadge').textContent = `⚡ ${data.took_ms} ms`;
+
+    // Category sidebar
+    const catList = document.getElementById('categoryList');
+    catList.innerHTML = `
+      <div class="cat-item ${!currentCat ? 'active' : ''}" onclick="doSearch('${escapeAttr(q)}',1,null)">
+        <span>All Categories</span>
+        <span class="cat-count">${data.total.toLocaleString()}</span>
+      </div>
+      ${(data.categories || []).map(c => `
+        <div class="cat-item ${currentCat === c.name ? 'active' : ''}"
+             onclick="doSearch('${escapeAttr(q)}',1,'${escapeAttr(c.name)}')">
+          <span>${c.name}</span>
+          <span class="cat-count">${c.count.toLocaleString()}</span>
+        </div>
+      `).join('')}
+    `;
+
+    // Results grid
+    const grid = document.getElementById('resultsGrid');
+    if (!data.results || data.results.length === 0) {
+      grid.innerHTML = '<div class="state-msg"><div class="icon">🔍</div><h2>No Results</h2><p>Try different keywords or remove filters.</p></div>';
+      return;
+    }
+
+    grid.innerHTML = data.results.map(r => `
+      <div class="result-card">
+        <div class="result-card-top">
+          <div class="result-name">${r.nameHighlight || r.productName}</div>
+          <span class="score-badge">Score ${r.score}</span>
+        </div>
+        ${r.descHighlight || r.description ? `
+          <div class="result-desc">${(r.descHighlight || r.description).substring(0, 200)}${(r.descHighlight || r.description).length > 200 ? '…' : ''}</div>
+        ` : ''}
+        <div class="result-pills">
+          ${r.category  ? `<span class="pill pill-cat">${r.category}</span>`  : ''}
+          ${r.subCategory && r.subCategory !== r.category ? `<span class="pill pill-sub">${r.subCategory}</span>` : ''}
+          ${r.subType   ? `<span class="pill pill-type">${r.subType}</span>`  : ''}
+        </div>
+      </div>
+    `).join('');
+
+    // Pagination
+    renderPagination(data.page, data.pages, q);
+  }
+
+  function renderPagination(current, total, q) {
+    const pg = document.getElementById('pagination');
+    if (total <= 1) { pg.innerHTML = ''; return; }
+
+    const pages = [];
+    pages.push(1);
+    for (let i = current - 2; i <= current + 2; i++) {
+      if (i > 1 && i < total) pages.push(i);
+    }
+    pages.push(total);
+    const uniq = [...new Set(pages)].sort((a,b) => a-b);
+
+    let html = '';
+    let prev = 0;
+    for (const p of uniq) {
+      if (p - prev > 1) html += `<span class="page-btn" style="cursor:default;opacity:.4;">…</span>`;
+      html += `<button class="page-btn ${p === current ? 'active' : ''}" onclick="doSearch('${escapeAttr(q)}',${p},'${escapeAttr(currentCat||'')}')">${p}</button>`;
+      prev = p;
+    }
+    pg.innerHTML = html;
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────
+  function hideDropdown() {
+    dropdown.classList.remove('visible');
+    suggList.innerHTML = '';
+    activeIndex = -1;
+  }
+  function showInitialState() {
+    document.getElementById('initialState').style.display = 'block';
+    document.getElementById('resultsLayout').style.display = 'none';
+    document.getElementById('statsBar').style.display = 'none';
+  }
+  function escapeAttr(s) {
+    return (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  }
+  const iconMap = {
+    'Food & Agriculture':              '🌾',
+    'Electronics & Electrical':        '⚡',
+    'Construction':                    '🏗️',
+    'Industrial Equipment & Machinery':'⚙️',
+    'Tools & Hardware':                '🔧',
+    'Health & Personal Care':          '💊',
+    'Apparel & Fashion':               '👗',
+    'Automotive & Transport':          '🚗',
+    'Raw Materials & Chemicals':       '🧪',
+    'Office Supplies & Equipment':     '📎',
+    'Home & Lifestyle':                '🏠',
+    'Services & Support':              '🤝',
+  };
+  function getCategoryIcon(cat) {
+    return iconMap[cat] || '📦';
+  }
+</script>
+</body>
+</html>

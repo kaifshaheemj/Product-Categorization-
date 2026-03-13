@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pepagora | Business Search</title>
+  <meta name="description" content="Search 100,000+ products and discover verified businesses on Pepagora — India's leading B2B marketplace." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:       #e53935;
+      --red-d:     #b71c1c;
+      --red-l:     #ffebee;
+      --bg:        #f4f6f8;
+      --surface:   #ffffff;
+      --border:    #e0e0e0;
+      --text:      #1a1a2e;
+      --muted:     #6b7280;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --shadow:    0 4px 24px rgba(0,0,0,.07);
+      --shadow-lg: 0 12px 48px rgba(229,57,53,.12);
+      /* Tier colours */
+      --global: #7c3aed;
+      --scale:  #1d4ed8;
+      --grow:   #059669;
+      --free:   #9ca3af;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Hero ──────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #e53935 0%, #c62828 55%, #7b1fa2 100%);
+      padding: 60px 24px 110px;
+      text-align: center;
+      position: relative;
+      overflow: visible;
+      z-index: 10;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 0; right: 0; height: 70px;
+      background: var(--bg);
+      clip-path: ellipse(55% 100% at 50% 100%);
+    }
+    .hero-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255,255,255,.85);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .hero-logo svg { opacity: .7; }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 52px);
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.5px;
+      margin-bottom: 10px;
+    }
+    .hero-sub {
+      color: rgba(255,255,255,.8);
+      font-size: 17px;
+      margin-bottom: 40px;
+    }
+
+    /* ── Search Box ────────────────────────────────────── */
+    .search-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1000;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 50px;
+      padding: 7px 7px 7px 24px;
+      box-shadow: var(--shadow-lg);
+      gap: 10px;
+      border: 1.5px solid rgba(255,255,255,.3);
+      transition: transform .2s;
+    }
+    .search-box:focus-within { transform: scale(1.015); }
+    #searchInput {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 17px;
+      font-family: inherit;
+      color: var(--text);
+      background: transparent;
+    }
+    #searchInput::placeholder { color: #9ca3af; }
+    .clear-btn {
+      background: none; border: none;
+      color: #9ca3af; font-size: 16px;
+      cursor: pointer; padding: 4px 8px;
+      display: none;
+    }
+    .search-btn {
+      background: var(--text);
+      border: none; border-radius: 44px;
+      padding: 13px 30px;
+      color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: all .2s; white-space: nowrap;
+      font-family: inherit;
+    }
+    .search-btn:hover { background: #000; transform: translateX(2px); }
+
+    /* ── Autocomplete Dropdown ─────────────────────────── */
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 14px);
+      left: -60px; right: -60px;       /* wider than the search box */
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 20px 70px rgba(0,0,0,.16);
+      max-height: 640px;
+      overflow-y: auto;
+      display: none;
+      z-index: 2000;
+      border: 1px solid var(--border);
+      animation: dropIn .18s cubic-bezier(.16,1,.3,1);
+    }
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .dropdown.visible { display: block; }
+
+    .dropdown-header {
+      padding: 12px 20px;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--muted);
+      background: #fafafa;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dropdown-latency {
+      font-size: 10px; font-weight: 600;
+      background: #fce4ec; color: var(--red);
+      border-radius: 20px; padding: 2px 9px;
+      border: 1px solid #f8bbd0;
+    }
+
+    /* Full business profile card INSIDE the dropdown */
+    .drop-card {
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      border-bottom: 1px solid #f4f6f8;
+      transition: background .12s;
+    }
+    .drop-card:last-of-type { border-bottom: none; }
+    .drop-card:hover { background: var(--red-l); }
+    .drop-card.kbd-active { background: #fff3e0; }
+
+    .drop-card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 20px 10px;
+      border-bottom: 1px solid rgba(0,0,0,.04);
+    }
+    .drop-logo {
+      width: 52px; height: 52px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      background: #f9f9f9;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 900; color: #fff;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .drop-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .drop-biz-info { flex: 1; min-width: 0; }
+    .drop-biz-name {
+      font-size: 15px; font-weight: 800; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .drop-biz-name mark { background: #fce4ec; color: var(--red); border-radius: 3px; padding: 0 2px; }
+    .drop-biz-meta {
+      display: flex; align-items: center; gap: 7px; margin-top: 3px; flex-wrap: wrap;
+    }
+    .drop-country { font-size: 11px; color: var(--muted); }
+    .drop-right { text-align: right; flex-shrink: 0; }
+    .drop-profile-link {
+      display: inline-block;
+      font-size: 10px; font-weight: 700; color: var(--red);
+      text-decoration: none;
+      border: 1px solid #f8bbd0; border-radius: 6px;
+      padding: 3px 9px;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .drop-profile-link:hover { background: var(--red); color: #fff; }
+
+    .drop-card-body {
+      padding: 8px 20px 12px;
+    }
+    .drop-product {
+      font-size: 13px; font-weight: 700; color: var(--text);
+      margin-bottom: 4px; line-height: 1.4;
+    }
+    .drop-product mark { background: #fce4ec; color: var(--red); border-radius: 3px; padding: 0 2px; }
+    .drop-desc {
+      font-size: 12px; color: var(--muted); line-height: 1.6;
+      margin-bottom: 7px;
+      display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .drop-desc mark { background: rgba(229,57,53,.1); color: var(--red); }
+    .drop-cats { display: flex; gap: 5px; flex-wrap: wrap; }
+    .drop-cat-chip {
+      font-size: 10px; border-radius: 50px;
+      padding: 2px 9px; font-weight: 600;
+      background: #fff3e0; color: #e65100;
+    }
+
+    /* Tier badge (shared) */
+    .tier-badge {
+      font-size: 9px; font-weight: 800;
+      letter-spacing: .8px; text-transform: uppercase;
+      border-radius: 20px; padding: 2px 8px;
+      color: #fff;
+    }
+
+    .dropdown-footer {
+      padding: 13px 20px;
+      background: #fce4ec;
+      border-top: 1px solid #f8bbd0;
+      font-size: 13px; color: var(--red);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px; font-weight: 700;
+    }
+    .dropdown-footer:hover { background: var(--red); color: #fff; }
+    .dropdown-footer svg { flex-shrink: 0; }
+
+    /* ── Dropdown section divider ───────────────────────── */
+    .drop-section-label {
+      padding: 8px 20px 5px;
+      font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--muted);
+      background: #fafafa;
+      border-top: 1.5px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .drop-section-label:first-child { border-top: none; }
+    .drop-section-label:first-child { border-top: none; }
+    .drop-section-label:first-child { border-top: none; }
+    .drop-section-label svg { opacity: .5; }
+
+    /* Quick suggestion row (Section 2) */
+    .quick-sugg {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-bottom: 1px solid #f9f9f9;
+      transition: background .12s;
+    }
+    .quick-sugg:last-of-type { border-bottom: none; }
+    .quick-sugg:hover, .quick-sugg.kbd-active { background: var(--red-l); }
+    .quick-sugg-icon {
+      width: 28px; height: 28px;
+      background: #f4f6f8; border: 1px solid var(--border);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0;
+    }
+    .quick-sugg-text {
+      flex: 1;
+      font-size: 13px; color: var(--text); font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .quick-sugg-text mark {
+      background: #fce4ec; color: var(--red);
+      border-radius: 3px; padding: 0 2px; font-weight: 700;
+    }
+    .quick-sugg-cat {
+      font-size: 10px; color: var(--muted);
+      background: #f4f6f8; border: 1px solid var(--border);
+      border-radius: 20px; padding: 2px 8px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ── Trending Chips ────────────────────────────────── */
+    .trending {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      justify-content: center; margin-top: 30px;
+    }
+    .trend-chip {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 50px;
+      padding: 9px 18px;
+      font-size: 13px; color: #fff;
+      cursor: pointer;
+      transition: all .2s;
+      backdrop-filter: blur(8px);
+      font-weight: 500;
+      font-family: inherit;
+    }
+    .trend-chip:hover { background: #fff; color: var(--red); transform: translateY(-2px); }
+
+    /* ── Main Layout ───────────────────────────────────── */
+    .main {
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 36px 24px 60px;
+    }
+
+    .stats-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 11px 22px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+      display: none;
+    }
+    .stats-text { font-size: 14px; color: var(--muted); flex: 1; }
+    .stats-text b { color: var(--text); }
+    .latency-tag {
+      font-size: 11px; background: #fce4ec; color: var(--red);
+      border: 1px solid #f8bbd0; border-radius: 50px; padding: 3px 12px; font-weight: 600;
+    }
+    .clear-results-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 6px;
+      padding: 5px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
+    }
+    .clear-results-btn:hover { border-color: var(--red); color: var(--red); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 28px;
+      align-items: flex-start;
+      display: none;
+    }
+    @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+    /* ── Sidebar ───────────────────────────────────────── */
+    .sidebar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      position: sticky; top: 18px;
+      box-shadow: var(--shadow);
+    }
+    .sidebar-section { margin-bottom: 20px; }
+    .sidebar-title {
+      font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .filter-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 10px; border-radius: 8px;
+      cursor: pointer; font-size: 13px; color: var(--muted);
+      transition: all .12s; margin-bottom: 2px;
+    }
+    .filter-item:hover { background: #f4f6f8; color: var(--text); }
+    .filter-item.active { background: var(--red); color: #fff; }
+    .filter-count {
+      font-size: 10px; background: rgba(0,0,0,.06);
+      border-radius: 50px; padding: 1px 7px; font-weight: 600;
+    }
+    .filter-item.active .filter-count { background: rgba(255,255,255,.25); }
+
+    /* Tier filters with colour dots */
+    .tier-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Results Grid ──────────────────────────────────── */
+    .results-grid { display: grid; gap: 14px; }
+
+    /* Full business profile card */
+    .biz-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0;
+      transition: all .2s;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .biz-card:hover {
+      border-color: var(--red);
+      transform: translateY(-3px);
+      box-shadow: 0 14px 48px rgba(229,57,53,.1);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid #f4f6f8;
+    }
+    .card-logo {
+      width: 58px; height: 58px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #f9f9f9;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 900; color: #fff;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .card-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .card-biz-info { flex: 1; min-width: 0; }
+    .card-biz-name {
+      font-size: 17px; font-weight: 800; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
+    }
+    .card-biz-name mark { background: #fce4ec; color: var(--red); border-radius: 3px; padding: 0 2px; }
+    .card-biz-meta {
+      display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap;
+    }
+    .card-country { font-size: 12px; color: var(--muted); }
+    .card-tier {
+      font-size: 9px; font-weight: 800; letter-spacing: .8px;
+      text-transform: uppercase; border-radius: 20px;
+      padding: 2px 9px; color: #fff;
+    }
+    .card-right { text-align: right; flex-shrink: 0; }
+    .card-score {
+      font-size: 10px; background: #f4f6f8; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 3px 8px; font-weight: 700;
+      display: inline-block;
+    }
+    .card-profile-link {
+      display: inline-block;
+      font-size: 11px; font-weight: 700; color: var(--red);
+      text-decoration: none; margin-top: 6px;
+      border: 1px solid #f8bbd0; border-radius: 6px;
+      padding: 3px 10px;
+      transition: all .15s;
+    }
+    .card-profile-link:hover { background: var(--red); color: #fff; }
+
+    .card-body { padding: 14px 20px 16px; }
+    .card-product {
+      font-size: 15px; font-weight: 700; color: var(--text);
+      line-height: 1.4; margin-bottom: 6px;
+    }
+    .card-product mark { background: #fce4ec; color: var(--red); border-radius: 3px; padding: 0 2px; }
+    .card-desc {
+      font-size: 13px; color: var(--muted); line-height: 1.65;
+      margin-bottom: 10px;
+    }
+    .card-desc mark { background: rgba(229,57,53,.1); color: var(--red); border-radius: 2px; }
+    .card-cats { display: flex; gap: 6px; flex-wrap: wrap; }
+    .card-cat-chip {
+      font-size: 10px; border-radius: 50px;
+      padding: 3px 10px; font-weight: 600;
+      background: #fff3e0; color: #e65100;
+    }
+
+    /* ── Pagination ────────────────────────────────────── */
+    .pagination {
+      display: flex; justify-content: center; gap: 6px;
+      margin-top: 28px; flex-wrap: wrap;
+    }
+    .page-btn {
+      width: 38px; height: 38px;
+      border-radius: 9px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .12s; font-family: inherit;
+    }
+    .page-btn:hover { border-color: var(--red); color: var(--red); }
+    .page-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+    /* ── State messages ────────────────────────────────── */
+    .state-msg {
+      text-align: center; padding: 80px 20px; color: var(--muted); grid-column: 1/-1;
+    }
+    .state-msg .icon { font-size: 58px; margin-bottom: 20px; opacity: .45; }
+    .state-msg h2 { font-size: 22px; color: var(--text); margin-bottom: 8px; }
+
+    /* ── Spinner ───────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(229,57,53,.25);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-block {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 18px; color: var(--muted); font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Hero ───────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-logo">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    Pepagora
+  </div>
+  <h1>Discover Verified Businesses</h1>
+  <p class="hero-sub">Search from 100,000+ industrial, food &amp; consumer products</p>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.3"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="searchInput" type="text" placeholder="Search products, categories, or business names…" autocomplete="off" spellcheck="false" />
+      <button class="clear-btn" id="clearBtn" title="Clear">✕</button>
+      <button class="search-btn" id="searchBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Search
+      </button>
+    </div>
+
+    <!-- Autocomplete dropdown -->
+    <div class="dropdown" id="dropdown">
+      <div class="dropdown-header">
+        <span id="dropdownHeader">Matching Businesses</span>
+        <span class="dropdown-latency" id="dropLatency"></span>
+      </div>
+      <div id="suggList"></div>
+      <div class="dropdown-footer" id="dropdownFooter">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <span id="footerText">View all results</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="trending" id="trending">
+    <button class="trend-chip" onclick="fire('capacitor')">Capacitor</button>
+    <button class="trend-chip" onclick="fire('basmati rice')">Basmati Rice</button>
+    <button class="trend-chip" onclick="fire('polycarbonate roofing')">Polycarbonate Roofing</button>
+    <button class="trend-chip" onclick="fire('wheelchair')">Wheelchair</button>
+    <button class="trend-chip" onclick="fire('voltage stabilizer')">Voltage Stabilizer</button>
+    <button class="trend-chip" onclick="fire('knitting needles')">Knitting Needles</button>
+  </div>
+</div>
+
+<!-- ── Main ───────────────────────────────────────────────────── -->
+<div class="main">
+  <!-- Stats bar -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stats-text" id="statsText"></div>
+    <span class="latency-tag" id="latencyTag"></span>
+    <button class="clear-results-btn" onclick="clearAll()">Clear</button>
+  </div>
+
+  <!-- Layout: sidebar + grid -->
+  <div class="layout" id="layout">
+    <!-- Sidebar filters -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Tier</div>
+        <div id="tierFilters"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Category</div>
+        <div id="catFilters"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Country</div>
+        <div id="ctrFilters"></div>
+      </div>
+    </aside>
+
+    <!-- Results -->
+    <div>
+      <div class="results-grid" id="resultsGrid"></div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Initial state -->
+  <div id="initialState" class="state-msg">
+    <div class="icon">🔭</div>
+    <h2>Find Your Supplier</h2>
+    <p>Type a product, category or company name to discover businesses.</p>
+  </div>
+</div>
+
+<!-- ── Scripts ─────────────────────────────────────────────────── -->
+<script>
+const API = 'http://127.0.0.1:8001';
+
+const TIER_COLOR = { global: '#7c3aed', scale: '#1d4ed8', grow: '#059669', free: '#9ca3af' };
+const TIER_ORDER = ['global', 'scale', 'grow', 'free'];
+
+const LOGO_FALLBACK_BG = {
+  global: '#7c3aed', scale: '#1d4ed8', grow: '#059669', free: '#e53935'
+};
+
+const CAT_ICON = {
+  'Food & Agriculture':              '🌾',
+  'Electronics & Electrical':        '⚡',
+  'Construction':                    '🏗️',
+  'Industrial Equipment & Machinery':'⚙️',
+  'Tools & Hardware':                '🔧',
+  'Health & Personal Care':          '💊',
+  'Apparel & Fashion':               '👗',
+  'Automotive & Transport':          '🚗',
+  'Raw Materials & Chemicals':       '🧪',
+  'Office Supplies & Equipment':     '📎',
+  'Home & Lifestyle':                '🏠',
+  'Services & Support':              '🤝',
+  'Sports & Entertainment':          '⚽',
+};
+const catIcon = cat => CAT_ICON[cat] || '📦';
+
+let timer      = null;
+let curQuery   = '';
+let curPage    = 1;
+let curCat     = null;
+let curCtr     = null;
+let curTier    = null;
+let kbdIdx     = -1;
+
+const input    = document.getElementById('searchInput');
+const dropdown = document.getElementById('dropdown');
+const suggList = document.getElementById('suggList');
+const clearBtn = document.getElementById('clearBtn');
+
+/* helpers */
+const esc = s => (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+const countryFlag = c => {
+  const map = {India:'🇮🇳','United Arab Emirates':'🇦🇪','United States':'🇺🇸',UK:'🇬🇧',Germany:'🇩🇪',China:'🇨🇳',Bangladesh:'🇧🇩',Pakistan:'🇵🇰'};
+  return (map[c]||'🌐') + ' ' + (c||'');
+};
+
+function logoEl(biz, tier, size=46, fontSize=18) {
+  const bg = LOGO_FALLBACK_BG[tier] || '#e53935';
+  const letter = (biz||'?')[0].toUpperCase();
+  if (biz.businessLogo) {
+    return `<img src="${esc(biz.businessLogo)}" alt="${esc(biz.businessName)}" onerror="this.parentElement.innerHTML='${letter}';this.parentElement.style.background='${bg}';" />`;
+  }
+  return letter;
+}
+
+/* ── Input ─────────────────────────────────────────────────────── */
+input.addEventListener('input', () => {
+  const q = input.value.trim();
+  clearBtn.style.display = q ? 'flex' : 'none';
+  kbdIdx = -1;
+  clearTimeout(timer);
+  if (q.length < 2) { hideDropdown(); return; }
+  timer = setTimeout(() => fetchSuggestions(q), 200);
+});
+
+input.addEventListener('keydown', e => {
+  const items = document.querySelectorAll('.drop-card, .quick-sugg');
+  if (e.key === 'ArrowDown') { e.preventDefault(); kbdIdx = Math.min(kbdIdx+1, items.length-1); hilite(items); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); kbdIdx = Math.max(kbdIdx-1, -1); hilite(items); }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (kbdIdx >= 0 && items[kbdIdx]) {
+      input.value = items[kbdIdx].dataset.name;
+      hideDropdown();
+      doSearch(input.value, 1);
+    } else {
+      doSearch(input.value.trim(), 1);
+    }
+  } else if (e.key === 'Escape') { hideDropdown(); }
+});
+
+function hilite(items) {
+  items.forEach((el, i) => {
+    el.classList.toggle('kbd-active', i === kbdIdx);
+    if (i === kbdIdx) input.value = el.dataset.name;
+  });
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) hideDropdown();
+});
+clearBtn.addEventListener('click', clearAll);
+document.getElementById('searchBtn').addEventListener('click', () => doSearch(input.value.trim(), 1));
+document.getElementById('dropdownFooter').addEventListener('click', () => { doSearch(input.value.trim(), 1); hideDropdown(); });
+
+function fire(q) { input.value = q; clearBtn.style.display='flex'; hideDropdown(); doSearch(q,1); }
+
+/* ── Autocomplete: two sections ─────────────────────────────── */
+async function fetchSuggestions(q) {
+  suggList.innerHTML = `<div class="loading-block"><span class="spinner"></span> Searching…</div>`;
+  dropdown.classList.add('visible');
+
+  try {
+    // Both calls fire in parallel
+    const [bizResp, sugResp] = await Promise.all([
+      fetch(`${API}/autocomplete?q=${encodeURIComponent(q)}&size=3`),
+      fetch(`${API}/suggest?q=${encodeURIComponent(q)}&size=6`)
+    ]);
+    const bizData = await bizResp.json();
+    const sugData = await sugResp.json();
+
+    // Update header with latency
+    document.getElementById('dropdownHeader').textContent = `Suggestions`;
+    const latEl = document.getElementById('dropLatency');
+    if (latEl) latEl.textContent = `⚡ ${bizData.took_ms} ms`;
+
+    if (!bizData.suggestions?.length && !sugData.items?.length) {
+      suggList.innerHTML = `<div class="loading-block">No matches found for "<b>${esc(q)}</b>"</div>`;
+      document.getElementById('footerText').textContent = `Search for "${q}"`;
+      return;
+    }
+
+    let html = '';
+
+    // ─ Section 1: Search Suggestions (TOP) ──────────────────────────────
+    if (sugData.items?.length) {
+      html += `<div class="drop-section-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Search Suggestions
+      </div>`;
+
+      html += sugData.items.map(item => {
+        const cat = (item.categories||[])[0] || '';
+        return `
+          <div class="quick-sugg" data-name="${esc(item.productName)}" onclick="selectSugg('${esc(item.productName)}')">
+            <div class="quick-sugg-icon">🔍</div>
+            <div class="quick-sugg-text">${item.nameHighlight || esc(item.productName)}</div>
+            ${cat ? `<span class="quick-sugg-cat">${catIcon(cat)} ${cat}</span>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    // ─ Section 2: Matching Businesses (BOTTOM) ───────────────────────────
+    if (bizData.suggestions?.length) {
+      html += `<div class="drop-section-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Matching Businesses
+      </div>`;
+
+      html += bizData.suggestions.map(s => {
+        const bg        = LOGO_FALLBACK_BG[s.packageType] || '#e53935';
+        const letter    = (s.businessName||'?')[0].toUpperCase();
+        const logoInner = s.businessLogo
+          ? `<img src="${esc(s.businessLogo)}" alt="${esc(s.businessName)}" onerror="this.parentElement.innerHTML='${letter}';this.parentElement.style.background='${bg}';" style="width:100%;height:100%;object-fit:contain;" />`
+          : letter;
+        const cats      = (s.categories||[]).slice(0,3).map(c=>`<span class="drop-cat-chip">${catIcon(c)} ${c}</span>`).join('');
+        const tierColor = TIER_COLOR[s.packageType] || '#9ca3af';
+        const tierLabel = (s.tierLabel || s.packageType || 'free').toUpperCase();
+        const profileUrl= s.profileUrl || '';
+        const profLink  = profileUrl
+          ? `<a class="drop-profile-link" href="${esc(profileUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">View Profile →</a>`
+          : '';
+        const descSnip  = (s.description || '').slice(0, 110);
+        return `
+          <div class="drop-card" data-name="${esc(s.businessName)}" onclick="selectSugg('${esc(s.businessName)}')">
+            <div class="drop-card-header">
+              <div class="drop-logo" style="background:${bg}">${logoInner}</div>
+              <div class="drop-biz-info">
+                <div class="drop-biz-name">${s.businessHighlight || esc(s.businessName)}</div>
+                <div class="drop-biz-meta">
+                  <span class="tier-badge" style="background:${tierColor}">${tierLabel}</span>
+                  <span class="drop-country">${countryFlag(s.businessCountry)}</span>
+                </div>
+              </div>
+              <div class="drop-right">${profLink}</div>
+            </div>
+            <div class="drop-card-body">
+              <div class="drop-product">📦 ${s.nameHighlight || esc(s.productName)}</div>
+              ${descSnip ? `<div class="drop-desc">${descSnip}…</div>` : ''}
+              <div class="drop-cats">${cats}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    suggList.innerHTML = html;
+    document.getElementById('footerText').textContent = `See all results for "${q}"`;
+
+  } catch(err) {
+    suggList.innerHTML = `<div class="loading-block">⚠️ API not reachable — is the server running?</div>`;
+  }
+}
+
+function selectSugg(name) { input.value = name; hideDropdown(); doSearch(name, 1); }
+
+/* ── Full Search ─────────────────────────────────────────────── */
+async function doSearch(q, page, cat, ctr, tier) {
+  if (!q) return;
+  curQuery = q; curPage = page;
+  curCat   = cat  !== undefined ? cat  : curCat;
+  curCtr   = ctr  !== undefined ? ctr  : curCtr;
+  curTier  = tier !== undefined ? tier : curTier;
+  hideDropdown();
+
+  document.getElementById('initialState').style.display = 'none';
+  document.getElementById('statsBar').style.display = 'none';
+  const layout = document.getElementById('layout');
+  layout.style.display = 'grid';
+  document.getElementById('resultsGrid').innerHTML =
+    `<div class="state-msg"><div class="spinner" style="width:36px;height:36px;border-width:3px;margin:0 auto;"></div></div>`;
+
+  let url = `${API}/search?q=${encodeURIComponent(q)}&page=${page}&size=20`;
+  if (curCat)  url += `&category=${encodeURIComponent(curCat)}`;
+  if (curCtr)  url += `&country=${encodeURIComponent(curCtr)}`;
+  if (curTier) url += `&tier=${encodeURIComponent(curTier)}`;
+
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    render(d, q);
+  } catch {
+    document.getElementById('resultsGrid').innerHTML =
+      `<div class="state-msg"><div class="icon">⚠️</div><h2>API Error</h2><p>Make sure <b>search_api_v2.py</b> is running on port 8001.</p></div>`;
+  }
+}
+
+function render(d, q) {
+  // Stats bar
+  const sb = document.getElementById('statsBar');
+  sb.style.display = 'flex';
+  document.getElementById('statsText').innerHTML =
+    `Found <b>${d.total.toLocaleString()}</b> results for <b>"${esc(q)}"</b>` +
+    (curCat  ? ` in <b>${esc(curCat)}</b>` : '') +
+    (curTier ? ` [${esc(curTier)}]` : '');
+  document.getElementById('latencyTag').textContent = `⚡ ${d.took_ms} ms`;
+
+  // Tier filters (sorted Global first)
+  document.getElementById('tierFilters').innerHTML =
+    `<div class="filter-item ${!curTier?'active':''}" onclick="doSearch('${esc(q)}',1,curCat,curCtr,null)">
+       <span>All Tiers</span><span class="filter-count">${d.total.toLocaleString()}</span>
+     </div>` +
+    (d.tiers||[]).map(t => `
+      <div class="filter-item ${curTier===t.name?'active':''}" onclick="doSearch('${esc(q)}',1,curCat,curCtr,'${esc(t.name)}')">
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="tier-dot" style="background:${t.color}"></span>${t.label}
+        </span>
+        <span class="filter-count">${t.count}</span>
+      </div>`).join('');
+
+  // Category filters
+  document.getElementById('catFilters').innerHTML =
+    `<div class="filter-item ${!curCat?'active':''}" onclick="doSearch('${esc(q)}',1,null,curCtr,curTier)">
+       <span>All</span><span class="filter-count">${d.total.toLocaleString()}</span>
+     </div>` +
+    (d.categories||[]).slice(0,12).map(c => `
+      <div class="filter-item ${curCat===c.name?'active':''}" onclick="doSearch('${esc(q)}',1,'${esc(c.name)}',curCtr,curTier)">
+        <span>${catIcon(c.name)} ${c.name}</span>
+        <span class="filter-count">${c.count}</span>
+      </div>`).join('');
+
+  // Country filters
+  document.getElementById('ctrFilters').innerHTML =
+    `<div class="filter-item ${!curCtr?'active':''}" onclick="doSearch('${esc(q)}',1,curCat,null,curTier)">
+       <span>All</span>
+     </div>` +
+    (d.countries||[]).slice(0,8).map(c => `
+      <div class="filter-item ${curCtr===c.name?'active':''}" onclick="doSearch('${esc(q)}',1,curCat,'${esc(c.name)}',curTier)">
+        <span>${countryFlag(c.name)}</span>
+        <span class="filter-count">${c.count}</span>
+      </div>`).join('');
+
+  // Cards
+  const grid = document.getElementById('resultsGrid');
+  if (!d.results?.length) {
+    grid.innerHTML = `<div class="state-msg"><div class="icon">🔍</div><h2>No Results</h2><p>Try different keywords or remove filters.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = d.results.map(r => {
+    const bg     = LOGO_FALLBACK_BG[r.packageType] || '#e53935';
+    const letter = (r.businessName||'?')[0].toUpperCase();
+    const logoInner = r.businessLogo
+      ? `<img src="${esc(r.businessLogo)}" alt="${esc(r.businessName)}" onerror="this.parentElement.innerHTML='${letter}';this.parentElement.style.background='${bg}';" style="width:100%;height:100%;object-fit:contain;" />`
+      : letter;
+    const tierColor = TIER_COLOR[r.packageType] || '#9ca3af';
+    const tierLabel = (r.tierLabel||r.packageType||'free').toUpperCase();
+    const cats = (r.categories||[]).slice(0,4).map(c=>`<span class="card-cat-chip">${catIcon(c)} ${c}</span>`).join('');
+    const profileLink = r.profileUrl
+      ? `<a class="card-profile-link" href="${esc(r.profileUrl)}" target="_blank" rel="noopener">View Profile →</a>`
+      : '';
+    const desc = (r.descHighlight || r.description || '').substring(0,220);
+
+    return `
+      <div class="biz-card" onclick="window.open('${esc(r.profileUrl)||'#'}','_blank')">
+        <div class="card-header">
+          <div class="card-logo" style="background:${bg}">${logoInner}</div>
+          <div class="card-biz-info">
+            <div class="card-biz-name">${r.businessHighlight || esc(r.businessName)}</div>
+            <div class="card-biz-meta">
+              <span class="card-tier" style="background:${tierColor}">${tierLabel}</span>
+              <span class="card-country">${countryFlag(r.businessCountry)}</span>
+            </div>
+          </div>
+          <div class="card-right">
+            <span class="card-score">Score ${r.score}</span><br/>
+            ${profileLink}
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-product">📦 ${r.nameHighlight || esc(r.productName)}</div>
+          ${desc ? `<div class="card-desc">${desc}${(r.descHighlight||r.description||'').length>220?'…':''}</div>` : ''}
+          <div class="card-cats">${cats}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  renderPagination(d.page, d.pages, q);
+}
+
+function renderPagination(cur, total, q) {
+  const pg = document.getElementById('pagination');
+  if (total <= 1) { pg.innerHTML = ''; return; }
+  const pages = new Set([1, total]);
+  for (let i = cur-2; i <= cur+2; i++) if (i>1 && i<total) pages.add(i);
+  const sorted = [...pages].sort((a,b)=>a-b);
+  let html = '', prev = 0;
+  for (const p of sorted) {
+    if (p-prev > 1) html += `<span class="page-btn" style="cursor:default;opacity:.4">…</span>`;
+    html += `<button class="page-btn ${p===cur?'active':''}" onclick="doSearch('${esc(q)}',${p})">${p}</button>`;
+    prev = p;
+  }
+  pg.innerHTML = html;
+}
+
+function hideDropdown() {
+  dropdown.classList.remove('visible');
+  suggList.innerHTML = '';
+  kbdIdx = -1;
+}
+function clearAll() {
+  input.value=''; clearBtn.style.display='none';
+  curQuery=curCat=curCtr=curTier=null; curPage=1;
+  hideDropdown();
+  document.getElementById('initialState').style.display='block';
+  document.getElementById('statsBar').style.display='none';
+  document.getElementById('layout').style.display='none';
+}
+</script>
+</body>
+</html>
